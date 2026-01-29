@@ -3,7 +3,7 @@ import os, sys
 import argparse
 from collections import defaultdict
 
-import gym
+import gymnasium as gym
 import numpy as np
 import pygame
 import pygame.freetype
@@ -53,7 +53,7 @@ def main():
     window_size = (render_size[0] + PANEL_LEFT + PANEL_RIGHT, render_size[1])
 
     print(f'Creating environment: {args.env}')
-    env = gym.make(args.env, disable_env_checker=True)
+    env = gym.make(args.env)
 
     if isinstance(env.observation_space, spaces.Dict):
         print('Observation space:')
@@ -75,7 +75,7 @@ def main():
     steps = 0
     return_ = 0.0
     episode = 0
-    obs = env.reset()
+    obs, info = env.reset()
 
     pygame.init()
     start_fullscreen = args.fullscreen or FOCUS_HACK
@@ -174,7 +174,8 @@ def main():
             if np.random.random() < args.random:
                 action = env.action_space.sample()
 
-        obs, reward, done, info = env.step(action)  # type: ignore
+        obs, reward, terminated, truncated, info = env.step(action)  # type: ignore
+        done = terminated or truncated
         # print({k: v for k, v in obs.items() if k != 'image'})
         steps += 1
         return_ += reward
@@ -185,7 +186,7 @@ def main():
             print(f'reward: {reward}')
         if done or force_reset:
             print(f'Episode done - length: {steps}  return: {return_}')
-            obs = env.reset()
+            obs, info = env.reset()
             steps = 0
             return_ = 0.0
             episode += 1
